@@ -87,6 +87,8 @@ El informe no se toca.
   Nunca dejes una pregunta abierta del tipo "¿por cuánto es el pago?".
 - En `blanks`, pasá `null` en las posiciones que no correspondan; nunca reordenes la lista.
 - `ensure_rows` de la tabla de obligaciones va con `count = 2 + nº obligaciones` (dos filas de encabezado).
+- Esa misma tabla lleva también `repeat_header` con `rows: 2`: el informe cruza de página cuando hay
+  varias obligaciones, y sin esa op las páginas 2 en adelante muestran la tabla sin títulos de columna.
 - La **sección 3, "PRODUCTOS ENTREGADOS A LA FECHA"** (body tabla 2), se llena solo con los
   productos pactados en la cláusula `NOTA`. Si el contrato no pactó ninguno, queda vacía.
   Esa tabla decide si el paquete lleva soportes adjuntos: reportá qué declaraste.

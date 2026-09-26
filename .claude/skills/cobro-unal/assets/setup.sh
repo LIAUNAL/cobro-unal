@@ -10,6 +10,6 @@ if [ ! -x "$VENV/bin/python" ]; then
 fi
 
 "$VENV/bin/pip" install --quiet --upgrade pip
-"$VENV/bin/pip" install --quiet python-docx pypdf
+"$VENV/bin/pip" install --quiet python-docx pypdf lxml
 
 echo "$VENV/bin/python"

@@ -109,12 +109,13 @@ Etiquetas válidas de modalidad (tomadas de la lista del propio formato):
 | `set_cell` | header tabla 0 `(0,3)` | Del año | CONTRATO |
 | `set_cell` | header tabla 0 `(1,1)` | Contratista | PERFIL |
 | `set_cell` | header tabla 0 `(1,3)` | C.C. / C.E. | PERFIL |
-| `set_cell` | header tabla 0 `(3,2)` `(3,3)` `(3,4)` | Desde: día · mes · año | CALCULADO (periodo informado) |
-| `set_cell` | header tabla 0 `(3,6)` `(3,7)` `(3,8)` | Hasta: día · mes · año | CALCULADO |
+| `set_cell` | header tabla 0 `(3,2)` `(3,3)` `(3,4)` | Desde: día · mes · año | CALCULADO — `max(primer día del mes, fecha_inicio)` |
+| `set_cell` | header tabla 0 `(3,6)` `(3,7)` `(3,8)` | Hasta: día · mes · año | CALCULADO — `min(último día del mes, fecha_terminacion)` |
 | `set_cell` | body tabla 0 `(0,0)` | `OBJETO: …` | CONTRATO (`OBJETO GENERAL`) |
 | `set_cell` | body tabla 0 `(2,2)` `(2,3)` `(2,4)` | Fecha inicio del contrato | CONTRATO |
 | `set_cell` | body tabla 0 `(2,6)` `(2,7)` `(2,8)` | Fecha terminación | CONTRATO |
 | `ensure_rows` | body tabla 1, `count = 2 + nº obligaciones` | — | — |
+| `repeat_header` | body tabla 1, `rows: 2` | — | — repite las 2 filas de encabezado en cada página cuando el informe cruza de página |
 | `set_cell` | body tabla 1 filas `2…`, columnas `0..4` | No. · obligación · actividades · % periodo · % acumulado | CONTRATO / **derivado de la obligación** / CALCULADO |
 | `set_cell` | body tabla 2 `(0,1)` `(1,1)` `(2,1)` | Productos entregados | CONTRATO (cláusula `NOTA`) si aplica |
 | `replace` | `se firma el presente informe el día de mes de año.` | Fecha de firma | CALCULADO |
