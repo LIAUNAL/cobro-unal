@@ -110,6 +110,31 @@ Un contrato entra al Excel del periodo `mm/yyyy` cuando su rango
 `[fecha_inicio, fecha_terminacion]` **se solapa** con ese mes, aunque sea un día.
 Se relacionan **todos** los contratos vigentes, no solo el que se cobra.
 
+## Periodo del informe
+
+El `PERIODO DEL INFORME` del formato `U.FT.12.011.020` **no es el mes calendario**: es la
+intersección entre el mes cobrado y la vigencia del contrato.
+
+```
+desde = max(primer_dia_del_mes, fecha_inicio)
+hasta = min(ultimo_dia_del_mes, fecha_terminacion)
+```
+
+Ninguno de los dos extremos puede salirse de `[fecha_inicio, fecha_terminacion]`: un informe que
+reporta días anteriores al inicio o posteriores a la terminación declara ejecución fuera del
+contrato, y la UNAL lo devuelve.
+
+| Caso | Mes cobrado | Vigencia | Periodo del informe |
+|---|---|---|---|
+| Mes intermedio | 09/2026 | 25/05 – 22/12/2026 | 01/09/2026 – 30/09/2026 |
+| **Último mes** | 08/2026 | 25/05 – **22/08**/2026 | 01/08/2026 – **22/08**/2026 |
+| **Primer mes** | 08/2026 | **14/08** – 30/11/2026 | **14/08**/2026 – 31/08/2026 |
+| Mes único | 09/2026 | 04/09 – 19/09/2026 | 04/09/2026 – 19/09/2026 |
+
+El campo vive en el **header** del formato, así que una sola op corrige las tres páginas. La fecha
+de firma del informe es otra cosa y sí puede ser posterior a la terminación: certifica cuándo se
+suscribe el documento, no qué se ejecutó.
+
 ## Meses de ejecución
 
 ```

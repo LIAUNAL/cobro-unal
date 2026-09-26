@@ -93,6 +93,26 @@ de cobertura, y volvé a correr el script sobre el mismo `.xlsx` con el mismo `-
 `E45` es `"  SI  "` (dos espacios a cada lado) únicamente si `C41` y `C42` son el mismo mes.
 Si difieren, es `"  NO  "` y hay que avisar que se pierde la disminución de base de retención.
 
+### Reexportá TODOS los PDFs, no solo los de contrato
+
+Escribir en fase 2 deja obsoleto **todo** PDF exportado en fase 1. Después de esa escritura hay que
+regenerar, en este orden:
+
+1. El PDF de la raíz, `Cobros/<yyyy-mm>/certificacion-cedular.pdf`.
+2. Un PDF por contrato, corriendo de nuevo cada `d36.json` con `--no-clear`.
+
+El de la raíz no lleva `D36` y por eso **no sirve para radicar**, pero es el que el usuario abre
+primero. Si queda más viejo que el `.xlsx`, muestra la declaración `E45` en blanco y contradice a
+los que sí se radican.
+
+**No verifiques esto por fechas.** `excel_fill.py` ejecuta `calculate full` + `save` en toda
+exportación, aunque escriba cero celdas, así que el `.xlsx` siempre queda con `mtime` posterior a
+los PDF que acabás de generar. Comparar timestamps da un falso positivo permanente.
+
+Verificá por contenido: corré `pdftotext -layout` sobre cada PDF del periodo y confirmá que la
+declaración sale como `SI` (o `NO`, según corresponda) y que la base de retención coincide con la
+que devolvió el readback. Si un PDF no la muestra, es de fase 1 y hay que reexportarlo.
+
 ## Reglas duras
 
 - Escribí **solo** las celdas azules del mapa. Jamás toques una celda con fórmula: Excel recalcula.
