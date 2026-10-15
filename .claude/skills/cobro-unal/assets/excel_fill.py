@@ -27,8 +27,10 @@ import argparse
 import datetime as dt
 import json
 import pathlib
+import re
 import subprocess
 import sys
+import zipfile
 
 SHEET = "Certificación Mensual"
 HIDE = "Instrucciones"
@@ -102,15 +104,6 @@ def build_script(xlsx: pathlib.Path, data: dict, pdf: pathlib.Path | None,
         )
     lines.append("  calculate full")
     lines.append("  save wb")
-    if pdf is not None:
-        # Excel exports every visible sheet, so hide the instruction sheet to
-        # honour the format's rule of submitting only "Certificación Mensual".
-        lines.append(f"  set visible of worksheet {applescript_string(HIDE)} of wb to sheet hidden")
-        lines.append("  activate object ws")
-        lines.append(
-            f"  save as ws filename {applescript_string(str(pdf))} file format PDF file format"
-        )
-        lines.append(f"  set visible of worksheet {applescript_string(HIDE)} of wb to sheet visible")
     lines.append("  set out to {}")
     for cell in READBACK.values():
         # Coerce through an intermediate variable: AppleScript refuses to round
@@ -128,6 +121,66 @@ def build_script(xlsx: pathlib.Path, data: dict, pdf: pathlib.Path | None,
     lines.append("end tell")
     lines.append("end timeout")
     return "\n".join(lines)
+
+
+def unlocked_copy(xlsx: pathlib.Path) -> pathlib.Path:
+    """Copy the workbook without its structure protection, for export only.
+
+    The official template locks the workbook structure with a password, so
+    Excel refuses to hide the instruction sheet. The lock lives only in
+    `xl/workbook.xml`; dropping it from a throwaway copy keeps the filled
+    workbook itself identical to the official format. The copy sits next to
+    the original because Excel cannot write under /tmp.
+    """
+    copy = xlsx.with_name(f".export-{xlsx.name}")
+    with zipfile.ZipFile(xlsx) as src, zipfile.ZipFile(copy, "w") as dst:
+        for item in src.infolist():
+            content = src.read(item.filename)
+            if item.filename == "xl/workbook.xml":
+                content = re.sub(rb"<workbookProtection[^>]*/>", b"", content)
+            dst.writestr(item, content)
+    return copy
+
+
+def build_export_script(xlsx: pathlib.Path, pdf: pathlib.Path) -> str:
+    # Excel exports every visible sheet, so hide the instruction sheet to
+    # honour the format's rule of submitting only "Certificación Mensual".
+    return "\n".join([
+        "with timeout of 600 seconds",
+        'tell application "Microsoft Excel"',
+        "  set displayAlerts to false",
+        f"  open POSIX file {applescript_string(str(xlsx))}",
+        f"  set wb to workbook {applescript_string(xlsx.name)}",
+        f"  set ws to worksheet {applescript_string(SHEET)} of wb",
+        "  calculate full",
+        f"  set visible of worksheet {applescript_string(HIDE)} of wb to sheet hidden",
+        "  activate object ws",
+        f"  save as ws filename {applescript_string(str(pdf))} file format PDF file format",
+        "  close wb saving no",
+        "  set displayAlerts to true",
+        "end tell",
+        "end timeout",
+    ])
+
+
+def export_pdf(xlsx: pathlib.Path, pdf: pathlib.Path) -> str | None:
+    """Export the certification sheet to `pdf`. Returns an error or None."""
+    # Excel silently keeps an existing PDF instead of replacing it, so remove
+    # it first and treat a missing file afterwards as a failed export.
+    pdf.unlink(missing_ok=True)
+    copy = unlocked_copy(xlsx)
+    try:
+        result = subprocess.run(
+            ["osascript", "-"], input=build_export_script(copy, pdf),
+            capture_output=True, text=True,
+        )
+    finally:
+        copy.unlink(missing_ok=True)
+    if result.returncode != 0:
+        return result.stderr.strip()
+    if not pdf.is_file():
+        return f"Excel reported success but did not write {pdf}"
+    return None
 
 
 def to_number(raw: str) -> float | str:
@@ -162,6 +215,12 @@ def main() -> int:
     if result.returncode != 0:
         print(result.stderr.strip(), file=sys.stderr)
         return result.returncode
+
+    if pdf is not None:
+        error = export_pdf(xlsx, pdf)
+        if error:
+            print(error, file=sys.stderr)
+            return 1
 
     values = result.stdout.strip().split(SEPARATOR)
     report = {
