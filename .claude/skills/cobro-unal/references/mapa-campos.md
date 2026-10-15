@@ -9,7 +9,11 @@ Fuente de cada dato: `CONTRATO` (PDF en `Contratos/`), `ANEXO` (PDF en `Anexos/`
 
 ---
 
-## 1. Excel — `MSCC_U-FT-12.010.069` · hoja `Certificación Mensual`
+## 1. Excel — `U-FT-12.010.069` V.6.0 · hoja `Certificación Mensual`
+
+Fuente oficial: la página *Pago de adquisiciones de bienes y servicios* de gerencia.unal.edu.co.
+La copia anterior (`MSCC_…V.6.1.1VF (2026-2S)`) tenía `I53:I56` como 0 fijo en lugar de la
+fórmula de base de retención, lo que subestimaba `I57` con dos o más contratos.
 
 Solo se diligencian las celdas azules. Todo lo demás es fórmula y lo recalcula Excel.
 Máximo **5 contratos**: filas 23 a 27.
